@@ -1,0 +1,78 @@
+﻿@model POS.Domain.Entities.Shift
+
+<div class="card shadow-lg mx-auto border-0 rounded-4" style="max-width: 550px;">
+    <div class="card-header bg-dark text-white text-center py-3">
+        <h5 class="mb-0">إغلاق الوردية - جرد الصندوق</h5>
+    </div>
+    <div class="card-body p-4">
+        <div id="mismatchAlert" class="alert alert-danger d-none animate__animated animate__shakeX">
+            <h6 class="fw-bold"><i class="fas fa-exclamation-triangle"></i> عجز/زيادة في الصندوق!</h6>
+            <p class="small mb-0">المبلغ المتوقع حسب النظام هو: <span id="expectedAmountLabel" class="fw-bold"></span></p>
+            <p class="small">يرجى مراجعة فواتيرك أو إعادة عد النقود.</p>
+        </div>
+
+        <div class="alert alert-info text-center small">
+            <i class="fas fa-info-circle"></i> نظام الجرد: أدخل المبلغ الموجود في الدرج حالياً.
+        </div>
+
+        <table class="table table-sm table-hover border">
+            <tr>
+                <td>مبيعات آجلة (Credit)</td>
+                <td class="fw-bold en-numbers text-end text-primary">@ViewBag.CreditSales.ToString("N2")</td>
+            </tr>
+        </table>
+
+        <form asp-action="CloseShift" method="post" id="closeShiftForm">
+            <input type="hidden" name="shiftId" value="@Model.Id" />
+
+            <div class="text-center my-4">
+                <label class="form-label fw-bold fs-5 mb-3">إجمالي النقدية في الدرج</label>
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-primary text-white border-0 px-4"><i class="fas fa-money-bill-wave"></i></span>
+                    <input type="number" step="0.01" name="actualCash" id="actualCash"
+                           class="form-control text-center fw-bold fs-2 border-primary"
+                           placeholder="0.00" required autofocus />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-danger btn-lg w-100 py-3 rounded-pill shadow">
+                تأكيد الإغلاق
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $('#closeShiftForm').submit(function (e) {
+            e.preventDefault();
+
+            const expected = parseFloat("@ViewBag.InternalExpected");
+            const actual = parseFloat($('#actualCash').val()) || 0;
+            const diff = actual - expected;
+
+            if (Math.abs(diff) > 0.01) { 
+                let message = diff < 0
+                    ? `يوجد عجز! المبلغ المتوقع في الصندوق هو: <b>${expected.toFixed(2)}</b>. لقد أدخلت أقل من ذلك.`
+                    : `يوجد زيادة! المبلغ المتوقع في الصندوق هو: <b>${expected.toFixed(2)}</b>. لقد أدخلت أكثر من ذلك.`;
+
+                Swal.fire({
+                    title: 'خطأ في مطابقة الصندوق',
+                    html: message + `<br><br><span class="text-danger fw-bold">هل تريد الإغلاق وتسجيل هذا الفرق عجزاً عليك؟</span>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'نعم، أغلق مع تسجيل العجز',
+                    cancelButtonText: 'لا، سأعيد العد'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit(); 
+                    }
+                });
+            } else {
+                this.submit();
+            }
+        });
+    </script>
+}

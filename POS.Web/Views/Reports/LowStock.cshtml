@@ -1,0 +1,116 @@
+﻿@model IEnumerable<POS.Application.DTOs.ProductDTO>
+
+@{
+    ViewData["Title"] = "تقرير نواقص المخزون";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4 shadow-sm p-3 bg-white rounded-3 align-items-center">
+        <div class="col-md-6">
+            <h3 class="text-danger mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i> تقرير نواقص المخزون
+            </h3>
+            <p class="text-muted small mb-0">قائمة بالمنتجات التي وصلت إلى حد الطلب أو أقل</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <button onclick="window.print()" class="btn btn-outline-dark">
+                <i class="fas fa-print me-1"></i> طباعة التقرير
+            </button>
+            <a asp-action="Index" class="btn btn-primary">
+                <i class="fas fa-boxes me-1"></i> إدارة المنتجات
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-4">المنتج</th>
+                            <th>الباركود</th>
+                            <th class="text-center">الكمية الحالية</th>
+                            <th class="text-center">حد الطلب</th>
+                            <th>الحالة</th>
+                            <th class="text-center">الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fas fa-check-circle fa-3x mb-3 text-success d-block"></i>
+                                    لا توجد نواقص حالياً، المخزون في حالة ممتازة.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                string rowClass = item.StockQuantity <= 0 ? "table-danger" : "";
+                                string badgeClass = item.StockQuantity <= 0 ? "bg-danger" : "bg-warning text-dark";
+                                string statusText = item.StockQuantity <= 0 ? "نفد من المخزون" : "منخفض";
+
+                                <tr class="@rowClass">
+                                    <td class="ps-4 fw-bold">@item.Name</td>
+                                    <td class="en-numbers">@item.Barcode</td>
+                                    <td class="text-center fw-bold fs-5">
+                                        <span class="badge rounded-pill @badgeClass">
+                                            @item.StockQuantity
+                                        </span>
+                                    </td>
+                                    <td class="text-center text-muted en-numbers">@item.ReorderLevel</td>
+                                    <td>
+                                        <span class="badge @badgeClass">
+                                            <i class="fas @(item.StockQuantity <= 0 ? "fa-times-circle" : "fa-arrow-down") me-1"></i>
+                                            @statusText
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group border shadow-sm rounded">
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-white text-primary" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-controller="Purchases" asp-action="Create" asp-route-productId="@item.Id" class="btn btn-sm btn-white text-success" title="طلب شراء">
+                                                <i class="fas fa-cart-plus"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white py-3">
+            <span class="text-muted small">إجمالي عدد الأصناف الناقصة: <b>@Model.Count()</b> صنف</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        .btn, .card-footer, .text-end {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            shadow: none !important;
+        }
+
+        .table {
+            width: 100% !important;
+            border: 1px solid #000 !important;
+        }
+    }
+
+    .en-numbers {
+        direction: ltr;
+        display: inline-block;
+    }
+</style>

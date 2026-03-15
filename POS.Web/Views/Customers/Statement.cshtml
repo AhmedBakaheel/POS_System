@@ -1,0 +1,111 @@
+﻿@using POS.Application.ViewModels
+@model IEnumerable<CustomerStatementRow>
+
+<div class="card shadow border-0 mt-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+        <h4 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>كشف حساب: @ViewBag.CustomerName</h4>
+        <button class="btn btn-warning shadow-sm" onclick="openPaymentModal()">
+            <i class="fas fa-money-bill-wave me-1"></i> تسجيل سند قبض
+        </button>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3 mb-4 align-items-end">
+            <input type="hidden" name="id" value="@ViewContext.RouteData.Values["id"]" />
+            <div class="col-md-4">
+                <label>من تاريخ</label>
+                <input type="date" name="fromDate" value="@ViewBag.FromDate" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label>إلى تاريخ</label>
+                <input type="date" name="toDate" value="@ViewBag.ToDate" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-secondary w-100">فلترة التقرير</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>البيان</th>
+                        <th>مَدين (عليه)</th>
+                        <th>دائن (له)</th>
+                        <th>الرصيد التراكمي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Date.ToString("yyyy-MM-dd")</td>
+                            <td>@item.Description</td>
+                            <td class="text-danger">@item.Debit.ToString("N2")</td>
+                            <td class="text-success">@item.Credit.ToString("N2")</td>
+                            <td class="fw-bold">@item.Balance.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تسجيل سند قبض</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" name="CustomerId" value="@ViewContext.RouteData.Values["id"]" />
+                    <div class="mb-3">
+                        <label>المبلغ</label>
+                        <input type="number" step="any" name="Amount" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>التاريخ</label>
+                        <input type="date" name="Date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>ملاحظات</label>
+                        <textarea name="Note" class="form-control"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="submitPayment()">حفظ السند</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script>
+        function openPaymentModal() {
+            new bootstrap.Modal(document.getElementById('paymentModal')).show();
+        }
+
+        function submitPayment() {
+            var formData = $('#paymentForm').serialize();
+            $.ajax({
+                url: '@Url.Action("RecordPayment", "Customers")',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function() {
+                    alert("حدث خطأ أثناء حفظ السند!");
+                }
+            });
+        }
+    </script>
+}

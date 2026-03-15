@@ -1,0 +1,85 @@
+﻿@using POS.Domain.Entities
+@model IEnumerable<Customer>
+
+<div class="card shadow border-0 mt-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i>إدارة العملاء</h5>
+        <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
+            <i class="fas fa-plus me-1"></i> إضافة عميل جديد
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="customersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>الاسم</th>
+                        <th>رقم الهاتف</th>
+                        <th>الرصيد الحالي</th>
+                        <th class="text-center">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold">@customer.Name</td>
+                            <td>@customer.Phone</td>
+                            <td>
+                                <span class="badge @(customer.Balance > 0 ? "bg-danger" : "bg-success")">
+                                    @customer.Balance.ToString("N2")
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <a asp-action="Statement" asp-route-id="@customer.Id" class="btn btn-outline-primary btn-sm" title="كشف الحساب">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </a>
+                                    <button class="btn btn-outline-success btn-sm" onclick="openPaymentModal(@customer.Id, '@customer.Name')" title="سند قبض">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="Create" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة عميل جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label>اسم العميل</label>
+                    <input name="Name" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label>رقم الهاتف</label>
+                    <input name="Phone" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label>الرصيد الافتتاحي</label>
+                    <input name="InitialBalance" type="number" step="any" class="form-control" value="0" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">حفظ العميل</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openPaymentModal(id, name) {
+            alert("سيتم تجهيز نموذج سند قبض للعميل: " + name);
+        }
+    </script>
+}

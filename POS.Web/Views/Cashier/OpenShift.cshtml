@@ -1,0 +1,31 @@
+﻿@{
+    ViewData["Title"] = "فتح دوام";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0"><i class="fas fa-cash-register me-2"></i> بدء وردية جديدة</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="OpenShift" method="post">
+                        <div class="mb-4 text-center">
+                            <label class="form-label fw-bold">أدخل مبلغ العهدة (الرصيد الافتتاحي) في الصندوق:</label>
+                            <input type="number" name="startingCash" class="form-control form-control-lg text-center"
+                                   placeholder="0.00" step="0.01" required autofocus />
+                            <div class="form-text text-muted">هذا المبلغ هو "الفكة" التي بدأت بها دوامك.</div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-play me-2"></i> فتح الوردية وبدء العمل
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

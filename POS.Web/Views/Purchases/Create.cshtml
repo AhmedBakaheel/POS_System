@@ -1,0 +1,248 @@
+﻿@using POS.Application.ViewModels
+@model PurchaseViewModel
+
+<form asp-action="Create" method="post" id="purchaseForm">
+
+    <div class="card p-3">
+
+        <div class="row mb-3">
+
+            <div class="col-md-4">
+                <label>المورد</label>
+                <select asp-for="SupplierId" class="form-control" required>
+                    <option value="">اختر المورد</option>
+                    @foreach (var s in ViewBag.Suppliers)
+                    {
+                        <option value="@s.Id">@s.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label>التاريخ</label>
+                <input asp-for="PurchaseDate" type="date" class="form-control" />
+            </div>
+
+        </div>
+
+
+        <div class="row mb-3">
+
+            <div class="col-md-6">
+                <input id="productSearch" class="form-control" placeholder="ابحث بالاسم أو الباركود">
+            </div>
+
+            <div class="col-md-2">
+                <input id="qty" type="number" class="form-control" value="1">
+            </div>
+
+            <div class="col-md-2">
+                <input id="cost" type="number" class="form-control" placeholder="السعر">
+            </div>
+
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100" onclick="addProduct()">إضافة</button>
+            </div>
+
+        </div>
+
+
+        <table class="table table-bordered text-center" id="itemsTable">
+
+            <thead class="table-dark">
+                <tr>
+                    <th>المنتج</th>
+                    <th width="120">الكمية</th>
+                    <th width="120">السعر</th>
+                    <th width="120">الإجمالي</th>
+                    <th width="70">حذف</th>
+                </tr>
+            </thead>
+
+            <tbody></tbody>
+
+        </table>
+
+
+        <div class="row mt-4">
+
+            <div class="col-md-4">
+                <label>الإجمالي</label>
+                <input asp-for="GrandTotal" id="grandTotal" class="form-control" readonly>
+            </div>
+
+            <div class="col-md-4">
+                <label>المدفوع</label>
+                <input asp-for="PaidAmount" id="paid" class="form-control" value="0">
+            </div>
+
+            <div class="col-md-4">
+                <label>الباقي</label>
+                <input id="remain" class="form-control" readonly>
+            </div>
+
+        </div>
+
+
+        <button class="btn btn-success btn-lg w-100 mt-4">
+            حفظ الفاتورة
+        </button>
+
+    </div>
+
+</form>
+
+@section Scripts {
+    <script>
+              let index = 0;
+        let products = @Html.Raw(Json.Serialize(ViewBag.Products));
+
+        $("#productSearch").on("keypress", function(e) {
+
+        if(e.which == 13)
+        {
+        e.preventDefault();
+        addProduct();
+        }
+
+        });
+
+
+        function addProduct()
+        {
+
+        let search = $("#productSearch").val().toLowerCase();
+
+        let product = products.find(p =>
+        p.name.toLowerCase().includes(search) ||
+        (p.barcode && p.barcode == search)
+        );
+
+        if(!product)
+        {
+        alert("المنتج غير موجود");
+        return;
+        }
+
+        let qty = parseFloat($("#qty").val());
+        let cost = parseFloat($("#cost").val()) || product.cost;
+
+        let existing = $(`#itemsTable tbody tr[data-id='${product.id}']`);
+
+        if(existing.length)
+        {
+        let qtyInput = existing.find(".qty");
+
+        let newQty = parseFloat(qtyInput.val()) + qty;
+
+        qtyInput.val(newQty);
+
+        updateRow(existing);
+
+        return;
+        }
+
+
+        let row = `
+        <tr data-id="${product.id}">
+
+        <td>
+        ${product.name}
+        <input type="hidden" name="Items[${index}].ProductId" value="${product.id}">
+        </td>
+
+        <td>
+        <input type="number"
+        class="form-control qty"
+        name="Items[${index}].Quantity"
+        value="${qty}"
+        oninput="updateRow(this.closest('tr'))">
+        </td>
+
+        <td>
+        <input type="number"
+        class="form-control cost"
+        name="Items[${index}].UnitCost"
+        value="${cost}"
+        oninput="updateRow(this.closest('tr'))">
+        </td>
+
+        <td class="subtotal"></td>
+
+        <td>
+        <button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button>
+        </td>
+
+        </tr>
+        `;
+
+        $("#itemsTable tbody").append(row);
+
+        updateRow($("#itemsTable tbody tr").last());
+
+        index++;
+
+        $("#productSearch").val('');
+        $("#qty").val(1);
+
+        }
+
+
+        function updateRow(row)
+        {
+
+        let qty = parseFloat($(row).find(".qty").val());
+        let cost = parseFloat($(row).find(".cost").val());
+
+        let subtotal = qty * cost;
+
+        $(row).find(".subtotal").text(subtotal.toFixed(2));
+
+        updateTotals();
+
+        }
+
+
+        function removeRow(btn)
+        {
+        $(btn).closest("tr").remove();
+        updateTotals();
+        }
+
+
+        function updateTotals()
+        {
+
+        let total = 0;
+
+        $(".subtotal").each(function(){
+
+        total += parseFloat($(this).text()) || 0;
+
+        });
+
+        $("#grandTotal").val(total.toFixed(2));
+
+        updateRemain();
+
+        }
+
+
+        $("#paid").on("input", function(){
+
+        updateRemain();
+
+        });
+
+
+        function updateRemain()
+        {
+
+        let total = parseFloat($("#grandTotal").val()) || 0;
+        let paid = parseFloat($("#paid").val()) || 0;
+
+        $("#remain").val((total - paid).toFixed(2));
+
+        }
+    </script>
+}

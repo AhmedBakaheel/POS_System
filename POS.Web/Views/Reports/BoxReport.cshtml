@@ -1,0 +1,133 @@
+﻿@using POS.Domain.Enums
+@model IEnumerable<POS.Domain.Entities.BoxTransaction>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3><i class="fas fa-cash-register text-success"></i> حركة الصندوق اليوم</h3>
+        <button class="btn btn-danger btn-lg shadow-sm" data-bs-toggle="modal" data-bs-target="#expenseModal">
+            <i class="fas fa-minus-circle"></i> إضافة مصروف جديد
+        </button>
+    </div>
+
+    <div class="row text-center mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6>المبيعات النقدية (+)</h6>
+                    <h3 class="en-numbers">@Model.Where(x => x.Type == TransactionType.Sale).Sum(x => x.Amount).ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6>سندات القبض (+)</h6>
+                    <h3 class="en-numbers">@Model.Where(x => x.Type == TransactionType.Payment).Sum(x => x.Amount).ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6>إجمالي المصروفات (-)</h6>
+                    <h3 class="en-numbers">@Math.Abs(Model.Where(x => x.Type == TransactionType.Expense).Sum(x => x.Amount)).ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-warning shadow-sm border-0">
+                <div class="card-body border border-warning rounded">
+                    <h6>صافي الصندوق (الدرج)</h6>
+                    <h2 class="en-numbers">@Model.Sum(x => x.Amount).ToString("N2")</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>الوقت</th>
+                        <th>البيان</th>
+                        <th>نوع الحركة</th>
+                        <th class="text-end">المبلغ</th>
+                    </tr>
+                </thead>
+                <tbody class="en-numbers">
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.TransactionDate.ToString("HH:mm")</td>
+                            <td>@item.Description</td>
+                            <td>
+                                @if (item.Type == TransactionType.Sale)
+                                {
+                                    <span class="badge bg-success">مبيعات</span>
+                                }
+                                else if (item.Type == TransactionType.Payment)
+                                {
+                                    <span class="badge bg-info">سند قبض</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">مصروف</span>
+                                }
+                            </td>
+                            <td class="text-end fw-bold @(item.Amount < 0 ? "text-danger" : "text-success")">
+                                @item.Amount.ToString("N2")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="expenseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">تسجيل مصروف جديد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label font-bold">المبلغ:</label>
+                    <input type="number" id="exp-amount" class="form-control form-control-lg en-numbers" placeholder="0.00">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">البيان (سبب الصرف):</label>
+                    <textarea id="exp-description" class="form-control" rows="2" placeholder="مثال: فاتورة كهرباء، شراء أدوات مكتبية..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger px-4" onclick="saveExpense()">حفظ وخصم من الصندوق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function saveExpense() {
+            const amount = parseFloat($('#exp-amount').val());
+            const desc = $('#exp-description').val();
+
+            if (!amount || amount <= 0 || !desc) {
+                alert("يرجى إدخال مبلغ صحيح وبيان للمصروف");
+                return;
+            }
+
+            $.post('/Reports/AddExpense', { amount: amount, description: desc }, function (res) {
+                alert(res.message);
+                location.reload();
+            }).fail(function() {
+                alert("حدث خطأ أثناء حفظ المصروف");
+            });
+        }
+    </script>
+}

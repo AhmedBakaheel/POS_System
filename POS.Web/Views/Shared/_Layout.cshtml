@@ -1,0 +1,210 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - POS PRO برو</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --primary-color: #1a252f;
+            --accent-color: #3498db;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Sidebar Style */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            right: 0;
+            background: var(--primary-color);
+            color: white;
+            padding-top: 20px;
+            transition: 0.3s;
+            z-index: 1000;
+        }
+
+            .sidebar .nav-link {
+                color: #bdc3c7;
+                padding: 12px 20px;
+                transition: 0.3s;
+                margin: 2px 15px;
+                border-radius: 8px;
+                font-size: 0.95rem;
+            }
+
+                .sidebar .nav-link:hover {
+                    background: #2c3e50;
+                    color: white;
+                }
+
+                .sidebar .nav-link.active {
+                    background: var(--accent-color);
+                    color: white;
+                    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+                }
+
+                .sidebar .nav-link i {
+                    width: 25px;
+                    font-size: 1.1rem;
+                }
+
+        /* Content Style */
+        .main-content {
+            margin-right: var(--sidebar-width);
+            padding: 25px;
+            transition: 0.3s;
+        }
+
+        .navbar-custom {
+            background: white;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border: none;
+        }
+
+        .section-title {
+            padding: 15px 25px 5px 0;
+            text-uppercase: true;
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive */
+        @@media (max-width: 992px) {
+            .sidebar
+
+        {
+            margin-right: calc(-1 * var(--sidebar-width));
+        }
+
+        .main-content {
+            margin-right: 0;
+        }
+
+        .sidebar.show {
+            margin-right: 0;
+        }
+
+        }</style>
+</head>
+<body>
+
+    <aside class="sidebar shadow">
+        <div class="text-center mb-4">
+            <h4 class="fw-bold text-white"><i class="fas fa-cash-register text-info me-2"></i> POS برو</h4>
+            <div class="small text-info px-3">نظام الإدارة الذكي</div>
+            <hr class="mx-4 border-secondary opacity-25">
+        </div>
+
+        <nav class="nav flex-column">
+            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")"
+               asp-controller="Home" asp-action="Index">
+                <i class="fas fa-chart-line"></i> لوحة التحكم
+            </a>
+
+            <div class="section-title">المبيعات</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Sales" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+               asp-controller="Sales"
+               asp-action="Index">
+                <i class="fas fa-shopping-cart"></i> نقطة البيع (POS)
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Customers" ? "active" : "")"
+               asp-controller="Customers" asp-action="Index">
+                <i class="fas fa-users"></i> قاعدة العملاء
+            </a>
+
+            <div class="section-title">المخزون والمشتريات</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Purchases" ? "active" : "")"
+               asp-controller="Purchases" asp-action="Create">
+                <i class="fas fa-file-import"></i> فاتورة شراء جديدة
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Purchases" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+               asp-controller="Purchases" asp-action="Index">
+                <i class="fas fa-history"></i> سجل المشتريات
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Suppliers" ? "active" : "")"
+               asp-controller="Suppliers" asp-action="Index">
+                <i class="fas fa-truck-loading"></i> الموردين
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Products" ? "active" : "")"
+               asp-controller="Products" asp-action="Index">
+                <i class="fas fa-box"></i> إدارة المنتجات
+            </a>
+
+            <div class="section-title">التقارير</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "BoxReport" ? "active" : "")"
+               asp-controller="Reports" asp-action="BoxReport">
+                <i class="fas fa-vault"></i> حركات الصندوق
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "LowStock" ? "active" : "")"
+               asp-controller="Reports" asp-action="LowStock">
+                <i class="fas fa-exclamation-triangle text-warning"></i> تقرير النواقص
+            </a>
+
+            <div class="mt-4 px-3">
+                <a class="dropdown-item text-danger" asp-controller="Cashier" asp-action="CloseShift">
+                    <i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <header class="navbar navbar-expand navbar-light navbar-custom rounded-4 px-4 py-2">
+            <button class="btn btn-light d-lg-none me-2" id="toggleSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="d-none d-md-block fw-bold text-secondary">
+                <i class="far fa-calendar-alt me-1"></i> @DateTime.Now.ToString("dd MMMM yyyy")
+            </div>
+
+            <div class="ms-auto d-flex align-items-center">
+                <div class="me-3 text-end d-none d-sm-block">
+                    <div class="fw-bold text-dark">@User.Identity?.Name</div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">الوردية: #@ViewBag.ActiveShiftId</span>
+                </div>
+                <div class="avatar shadow-sm bg-gradient bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+            </div>
+        </header>
+
+        <main role="main" class="animate-fadeIn">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $("#toggleSidebar").click(function() {
+            $(".sidebar").toggleClass("show");
+        });
+
+        $(document).click(function(event) {
+            if (!$(event.target).closest('.sidebar, #toggleSidebar').length) {
+                if ($('.sidebar').hasClass('show')) {
+                    $('.sidebar').removeClass('show');
+                }
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

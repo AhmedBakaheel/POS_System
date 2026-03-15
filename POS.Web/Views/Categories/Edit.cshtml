@@ -1,0 +1,22 @@
+﻿@model POS.Application.DTOs.CategoryDTO
+
+<div class="card shadow">
+    <div class="card-header">
+        <h4>تعديل صنف: @Model.Name</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">اسم الصنف</label>
+                <input asp-for="Name" class="form-control" required />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label">الوصف</label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+            <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+        </form>
+    </div>
+</div>

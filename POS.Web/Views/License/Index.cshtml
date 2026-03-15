@@ -1,0 +1,37 @@
+﻿@model POS.Application.DTOs.LicenseStatusDTO
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4>تفعيل نظام نقطة البيع (POS System)</h4>
+        </div>
+        <div class="card-body">
+            @if (Model.IsActive)
+            {
+                <div class="alert alert-success">
+                    النظام مفعل حالياً. ينتهي في: @Model.ExpiryDate.ToShortDateString()
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    النظام غير مفعل. يرجى التواصل مع المطور لتفعيل النسخة.
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">كود الجهاز الخاص بك (Machine Code):</label>
+                    <input type="text" class="form-control" value="@Model.MachineCode" readonly />
+                    <small class="text-muted">قم بنسخ هذا الكود وإرساله للمطور للحصول على مفتاح التفعيل.</small>
+                </div>
+
+                <form asp-action="Activate" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">أدخل مفتاح التفعيل (License Key):</label>
+                        <input type="text" name="licenseKey" class="form-control" placeholder="XXXX-XXXX-XXXX" required />
+                    </div>
+                    <button type="submit" class="btn btn-success">تفعيل النظام الآن</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

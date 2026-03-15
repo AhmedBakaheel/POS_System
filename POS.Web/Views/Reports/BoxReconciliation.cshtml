@@ -1,0 +1,71 @@
+﻿@using POS.Application.ViewModels
+@model IEnumerable<BoxReportViewModel>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary"><i class="fas fa-balance-scale me-2"></i> تقرير مطابقة الصندوق</h2>
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+            <i class="fas fa-print me-1"></i> طباعة التقرير
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-center">
+                        <tr>
+                            <th>رقم الوردية</th>
+                            <th>الموظف</th>
+                            <th>التاريخ</th>
+                            <th>الرصيد الافتتاحي</th>
+                            <th>المبيعات المتوقعة</th>
+                            <th>المبلغ الفعلي (الجرد)</th>
+                            <th>الفرق (عجز/زيادة)</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold">#@item.ShiftId</td>
+                                <td>@item.EmployeeName</td>
+                                <td>@item.Date.ToString("yyyy/MM/dd HH:mm")</td>
+                                <td>@item.StartingCash.ToString("N2")</td>
+                                <td class="text-primary fw-bold">@item.ExpectedCash.ToString("N2")</td>
+                                <td class="text-dark fw-bold">@item.ActualCash.ToString("N2")</td>
+                                <td class="fw-bold @(item.Difference < 0 ? "text-danger" : item.Difference > 0 ? "text-success" : "text-muted")">
+                                    @item.Difference.ToString("N2")
+                                </td>
+                                <td>
+                                    @if (item.Difference == 0)
+                                    {
+                                        <span class="badge bg-success-subtle text-success px-3">مطابق <i class="fas fa-check-circle"></i></span>
+                                    }
+                                    else if (item.Difference < 0)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger px-3">عجز <i class="fas fa-arrow-down"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning px-3">زيادة <i class="fas fa-arrow-up"></i></span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* تحسين شكل الطباعة */
+    @@media print {
+        .btn, .sidebar, header { display: none !important; }
+        .main-content { margin: 0 !important; padding: 0 !important; }
+        table { border: 1px solid #000 !important; }
+    }
+</style>

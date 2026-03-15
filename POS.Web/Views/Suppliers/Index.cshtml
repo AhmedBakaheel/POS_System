@@ -1,0 +1,167 @@
+﻿@model IEnumerable<POS.Application.DTOs.SupplierDTO>
+
+<div class="container-fluid">
+    <div class="row mb-3 shadow-sm p-3 bg-white rounded-3">
+        <div class="col-6">
+            <h4><i class="fas fa-truck-loading me-2 text-primary"></i> إدارة الموردين</h4>
+        </div>
+        <div class="col-6 text-end">
+            <a asp-action="Create" class="btn btn-success rounded-pill px-4">
+                <i class="fas fa-plus me-1"></i> إضافة مورد جديد
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover align-middle" id="suppliersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>اسم المورد</th>
+                        <th>المسؤول</th>
+                        <th>رقم الهاتف</th>
+                        <th class="text-center">الرصيد الحالي</th>
+                        <th>الحالة</th>
+                        <th class="text-end">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold">@item.Name</td>
+                            <td>@item.ContactName</td>
+                            <td class="en-numbers">@item.Phone</td>
+                            <td class="text-center">
+                                <span class="badge @(item.Balance > 0 ? "bg-danger" : "bg-success") fs-6 px-3">
+                                    @item.Balance.ToString("N2")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(item.IsActive ? "bg-info" : "bg-secondary")">
+                                    @(item.IsActive ? "نشط" : "غير نشط")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group border rounded shadow-sm bg-white">
+                                    <button type="button" class="btn btn-sm btn-light text-success border-end"
+                                            title="صرف نقدية"
+                                            onclick="openPayModal('@item.Id', '@item.Name')">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </button>
+
+                                    <a asp-action="Statement" asp-route-id="@item.Id" class="btn btn-sm btn-light text-primary border-end" title="كشف حساب">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                    </a>
+
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light text-dark border-end" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <button onclick="deleteSupplier(@item.Id)" class="btn btn-sm btn-light text-danger" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="paySupplierModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-money-bill-wave me-2"></i>صرف نقدية لمورد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="paySupplierForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="modalSupplierId" name="supplierId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">المورد</label>
+                        <input type="text" id="modalSupplierName" class="form-control bg-light fw-bold" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-success">المبلغ المطلوب صرفه</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-success text-white"><i class="fas fa-dollar-sign"></i></span>
+                            <input type="number" step="0.01" id="modalAmount" name="amount"
+                                   class="form-control form-control-lg border-success fw-bold text-center"
+                                   placeholder="0.00" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-bold">بيان الصرف / ملاحظات</label>
+                        <textarea id="modalNotes" name="notes" class="form-control" rows="2" placeholder="أدخل أي ملاحظات إضافية هنا..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 shadow">
+                        تأكيد وإضافة للسندات <i class="fas fa-check-circle ms-1"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function openPayModal(id, name) {
+            $('#modalSupplierId').val(id);
+            $('#modalSupplierName').val(name);
+            $('#modalAmount').val('');
+            $('#modalNotes').val('');
+            $('#paySupplierModal').modal('show');
+            setTimeout(() => $('#modalAmount').focus(), 500);
+        }
+
+        $('#paySupplierForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const amount = $('#modalAmount').val();
+            const name = $('#modalSupplierName').val();
+
+            Swal.fire({
+                title: 'تأكيد عملية الصرف',
+                text: `هل أنت متأكد من صرف مبلغ (${amount}) للمورد: ${name}؟`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'نعم، اعتمد الصرف',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const data = {
+                        supplierId: $('#modalSupplierId').val(),
+                        amount: amount,
+                        notes: $('#modalNotes').val()
+                    };
+
+                    $.post('@Url.Action("PaySupplier", "Suppliers")', data)
+                        .done(function (response) {
+                            if (response.success) {
+                                Swal.fire('تم بنجاح!', response.message, 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('خطأ!', response.message, 'error');
+                            }
+                        })
+                        .fail(function () {
+                            Swal.fire('خطأ!', 'فشل الاتصال بالسيرفر', 'error');
+                        });
+                }
+            });
+        });
+    </script>
+}

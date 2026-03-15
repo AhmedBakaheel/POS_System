@@ -1,0 +1,251 @@
+﻿@using POS.Domain.Enums
+@model IEnumerable<POS.Domain.Entities.SupplierTransaction>
+
+@{
+    decimal runningBalance = ViewBag.OpeningBalance ?? 0;
+    decimal totalDebit = 0;
+    decimal totalCredit = 0;
+}
+
+<div class="container-fluid">
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+
+            <div class="row align-items-center">
+
+                <div class="col-md-6">
+                    <h4 class="text-primary fw-bold">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>
+                        كشف حساب المورد
+                    </h4>
+
+                    <div class="mt-2">
+
+                        <div><strong>اسم المورد:</strong> @ViewBag.SupplierName</div>
+
+                        <div>
+                            <strong>الرصيد الحالي:</strong>
+                            <span class="fw-bold text-danger en-numbers">
+                                @ViewBag.CurrentBalance.ToString("N2")
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <form method="get" class="row g-2 justify-content-end">
+
+                        <input type="hidden" name="id" value="@Context.Request.Query["id"]" />
+
+                        <div class="col-auto">
+                            <label class="small">من تاريخ</label>
+                            <input type="date" name="fromDate"
+                                   value="@ViewBag.FromDate"
+                                   class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-auto">
+                            <label class="small">إلى تاريخ</label>
+                            <input type="date" name="toDate"
+                                   value="@ViewBag.ToDate"
+                                   class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-auto d-flex align-items-end">
+
+                            <button type="submit" class="btn btn-primary btn-sm me-2">
+                                <i class="fas fa-search"></i>
+                                عرض
+                            </button>
+
+                            <button type="button"
+                                    onclick="window.print()"
+                                    class="btn btn-dark btn-sm">
+                                <i class="fas fa-print"></i>
+                                طباعة
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-hover mb-0">
+
+                <thead class="table-dark text-center">
+
+                    <tr>
+                        <th width="160">التاريخ</th>
+                        <th width="160">نوع الحركة</th>
+                        <th>البيان</th>
+                        <th width="130" class="text-success">مدين</th>
+                        <th width="130" class="text-danger">دائن</th>
+                        <th width="160" class="bg-secondary">الرصيد</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr class="table-secondary fw-bold">
+
+                        <td colspan="5" class="text-end">
+                            رصيد أول المدة
+                        </td>
+
+                        <td class="text-center en-numbers">
+                            @runningBalance.ToString("N2")
+                        </td>
+
+                    </tr>
+
+                    @foreach (var trans in Model)
+                    {
+
+                        runningBalance += (trans.Credit - trans.Debit);
+
+                        totalDebit += trans.Debit;
+                        totalCredit += trans.Credit;
+
+                        <tr>
+
+                            <td class="en-numbers">
+                                @trans.Date.ToString("yyyy/MM/dd HH:mm")
+                            </td>
+
+                            <td class="text-center">
+
+                                @switch (trans.Type)
+                                {
+
+                                    case SupplierTransactionType.PurchaseInvoice:
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-shopping-cart me-1"></i>
+                                            فاتورة شراء
+                                        </span>
+                                        break;
+
+                                    case SupplierTransactionType.CashPayment:
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-money-bill-wave me-1"></i>
+                                            دفع نقدي
+                                        </span>
+                                        break;
+
+                                    case SupplierTransactionType.ReturnInvoice:
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-undo me-1"></i>
+                                            مرتجع شراء
+                                        </span>
+                                        break;
+
+                                    case SupplierTransactionType.OpeningBalance:
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-history me-1"></i>
+                                            رصيد افتتاحي
+                                        </span>
+                                        break;
+
+                                }
+
+                            </td>
+
+                            <td>
+                                @trans.Reference
+                            </td>
+
+                            <td class="text-center text-success fw-bold en-numbers">
+                                @(trans.Debit > 0 ? trans.Debit.ToString("N2") : "-")
+                            </td>
+
+                            <td class="text-center text-danger fw-bold en-numbers">
+                                @(trans.Credit > 0 ? trans.Credit.ToString("N2") : "-")
+                            </td>
+
+                            <td class="text-center fw-bold bg-light en-numbers
+@(runningBalance > 0 ? "text-danger" : "text-success")">
+
+                                @runningBalance.ToString("N2")
+
+                            </td>
+
+                        </tr>
+
+                    }
+
+                </tbody>
+
+                <tfoot class="table-light fw-bold">
+
+                    <tr>
+
+                        <td colspan="3" class="text-end">
+                            الإجمالي
+                        </td>
+
+                        <td class="text-center text-success en-numbers">
+                            @totalDebit.ToString("N2")
+                        </td>
+
+                        <td class="text-center text-danger en-numbers">
+                            @totalCredit.ToString("N2")
+                        </td>
+
+                        <td class="text-center en-numbers">
+
+                            @(runningBalance.ToString("N2"))
+
+                        </td>
+
+                    </tr>
+
+                </tfoot>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    .en-numbers {
+        font-family: monospace;
+        letter-spacing: 1px;
+    }
+
+    @@media print {
+
+        .btn,
+        form,
+        .card-header,
+        .navbar,
+        .sidebar {
+            display: none !important;
+        }
+
+        body {
+            background: white !important;
+        }
+
+        .table {
+            font-size: 12px;
+        }
+    }
+</style>

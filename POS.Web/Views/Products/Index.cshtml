@@ -1,0 +1,200 @@
+﻿@model IEnumerable<POS.Application.DTOs.ProductDTO>
+
+@{
+    ViewData["Title"] = "إدارة المخزون الذكي";
+
+    // الحسابات تعتمد على ViewBag القادم من الأكشن لضمان دقة الأرقام
+    var totalProducts = Model.Count();
+    var lowStockCount = ViewBag.LowStockCount ?? 0;
+    var outOfStockCount = ViewBag.OutOfStockCount ?? 0;
+}
+
+<div class="row mb-4">
+    <div class="col-xl-4 col-md-6">
+        <div class="card border-start border-primary border-4 shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">إجمالي الأصناف</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@totalProducts</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-boxes fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6">
+        <div class="card border-start border-warning border-4 shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">تحت حد الطلب</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@lowStockCount</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-exclamation-triangle fa-2x text-warning"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6">
+        <div class="card border-start border-danger border-4 shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">نفذت تماماً</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@outOfStockCount</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-times-circle fa-2x text-danger"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow mb-4 border-0">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center bg-dark text-white">
+        <h6 class="m-0 font-weight-bold"><i class="fas fa-warehouse me-2"></i> المستودع المركزي</h6>
+        <a asp-action="Create" class="btn btn-warning btn-sm fw-bold shadow-sm">
+            <i class="fas fa-plus me-1"></i> إضافة منتج جديد
+        </a>
+    </div>
+    <div class="card-body">
+
+        <div class="row mb-4 g-2">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-primary text-white border-0"><i class="fas fa-search"></i></span>
+                    <input type="text" id="smartSearch" class="form-control shadow-none" placeholder="ابحث بالاسم أو الباركود..." autofocus>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select id="stockFilter" class="form-select shadow-none border-primary">
+                    <option value="all">عرض كل المخزون</option>
+                    <option value="low">النواقص (حسب حد الطلب)</option>
+                    <option value="out">المنتهية (0)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="productsTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0">الباركود</th>
+                        <th class="border-0">اسم المنتج</th>
+                        <th class="border-0 text-center">التصنيف</th>
+                        <th class="border-0 text-center">الكمية الحالية</th>
+                        <th class="border-0 text-center text-primary">حد الطلب</th> 
+                        <th class="border-0 text-center">سعر البيع</th>
+                        <th class="border-0 text-center">الحالة</th>
+                        <th class="border-0 text-center" style="width: 120px;">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        bool isOutOfStock = item.StockQuantity <= 0;
+                        bool isLowStock = !isOutOfStock && item.StockQuantity <= item.ReorderLevel;
+
+                        string stockRowClass = isOutOfStock ? "table-danger" : (isLowStock ? "table-warning" : "");
+
+                        <tr class="product-row @stockRowClass"
+                            data-barcode="@item.Barcode"
+                            data-name="@item.Name"
+                            data-stock="@item.StockQuantity"
+                            data-reorder="@item.ReorderLevel">
+                            @* القيمة لفلترة الـ JS *@
+
+                            <td><code class="fw-bold text-dark">@item.Barcode</code></td>
+                            <td class="fw-bold">@item.Name</td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border">@item.CategoryName</span>
+                            </td>
+                            <td class="text-center fw-bold">@item.StockQuantity</td>
+                            <td class="text-center fw-bold text-primary">@item.ReorderLevel</td> @* عرض القيمة الرقمية *@
+                            <td class="text-center">@item.Price.ToString("N2")</td>
+                            <td class="text-center">
+                                @if (isOutOfStock)
+                                {
+                                    <span class="badge bg-danger rounded-pill shadow-sm">نفذ المخزون</span>
+                                }
+                                else if (isLowStock)
+                                {
+                                    <span class="badge bg-warning text-dark rounded-pill shadow-sm">تحت حد الطلب</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success rounded-pill shadow-sm">متوفر</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group shadow-sm">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-white btn-sm border text-info"><i class="fas fa-edit"></i></a>
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-white btn-sm border text-danger" onclick="return confirm('هل أنت متأكد؟')"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,.02) !important;
+        transition: 0.3s;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.6em 1em;
+    }
+
+    .border-start {
+        border-left-width: 6px !important;
+    }
+
+    code {
+        background: #f4f4f4;
+        padding: 2px 5px;
+        border-radius: 4px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            function filterTable() {
+                var searchVal = $("#smartSearch").val().toLowerCase();
+                var stockVal = $("#stockFilter").val();
+
+                $("#productsTable tbody tr").each(function () {
+                    var barcode = $(this).attr("data-barcode").toLowerCase();
+                    var name = $(this).attr("data-name").toLowerCase();
+                    var stock = parseFloat($(this).attr("data-stock"));
+                    var reorder = parseFloat($(this).attr("data-reorder"));
+
+                    var matchesSearch = barcode.includes(searchVal) || name.includes(searchVal);
+                    var matchesStock = true;
+
+                    if (stockVal === "low") {
+                        matchesStock = (stock > 0 && stock <= reorder);
+                    } else if (stockVal === "out") {
+                        matchesStock = (stock <= 0);
+                    }
+
+                    $(this).toggle(matchesSearch && matchesStock);
+                });
+            }
+
+            $("#smartSearch").on("keyup", filterTable);
+            $("#stockFilter").on("change", filterTable);
+        });
+    </script>
+}
