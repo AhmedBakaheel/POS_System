@@ -18,6 +18,7 @@ namespace POS.Domain.Interfaces
         IGenericRepository<Purchase> Purchases { get; }
         IGenericRepository<PurchaseItem> PurchaseItems { get; }
         IGenericRepository<SalesReturn> SalesReturns { get; }
+        IGenericRepository<HeldSale> HeldSales { get; }
         IGenericRepository<SalesReturnItem> SalesReturnItems { get; }
         IGenericRepository<Shift> Shifts { get; }
         IGenericRepository<SupplierTransaction> SupplierTransactions { get; }

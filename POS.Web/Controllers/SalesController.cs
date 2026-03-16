@@ -7,6 +7,8 @@ using POS.Application.Services;
 using POS.Domain.Interfaces;
 using POS.Domain.Enums;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 public class SalesController : Controller
 {
@@ -19,12 +21,14 @@ public class SalesController : Controller
         IProductService productService,
         ISaleService saleService,
         UserManager<AppUser> userManager,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ISalesReturnService salesReturnService)
     {
         _productService = productService;
         _saleService = saleService;
         _userManager = userManager;
         _unitOfWork = unitOfWork;
+        _salesReturnService = salesReturnService;
     }
 
     [Authorize]
@@ -85,14 +89,16 @@ public class SalesController : Controller
     [HttpGet]
     public async Task<IActionResult> GetSaleDetails(int saleId)
     {
-        var sale = await _unitOfWork.Sales.FindAsync(s => s.Id == saleId);
-        var saleData = sale.FirstOrDefault();
+        var saleData = await _unitOfWork.Sales.GetQueryable() 
+            .Include(s => s.SaleItems)
+            .ThenInclude(si => si.Product) 
+            .FirstOrDefaultAsync(s => s.Id == saleId);
 
         if (saleData == null) return NotFound("الفاتورة غير موجودة");
 
         var items = saleData.SaleItems.Select(i => new {
             productId = i.ProductId,
-            productName = i.Product?.Name,
+            productName = i.Product?.Name ?? "منتج غير معروف", 
             quantity = i.Quantity,
             unitPrice = i.UnitPrice,
             total = i.Quantity * i.UnitPrice
@@ -172,5 +178,65 @@ public class SalesController : Controller
             await _unitOfWork.RollbackAsync();
             return BadRequest(ex.Message);
         }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> HoldSale([FromBody] HeldSaleDTO dto)
+    {
+        if (dto == null || !dto.Items.Any())
+            return BadRequest("لا يمكن تعليق فاتورة فارغة");
+
+        var heldSale = new HeldSale
+        {
+            HoldDate = DateTime.Now,
+            Note = dto.Note,
+            UserId = _userManager.GetUserId(User),
+            ContentJson = JsonConvert.SerializeObject(dto.Items)
+        };
+
+        await _unitOfWork.HeldSales.AddAsync(heldSale);
+        await _unitOfWork.CompleteAsync();
+
+        return Ok(new { id = heldSale.Id });
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> GetHeldSales()
+    {
+        var userId = _userManager.GetUserId(User);
+
+        var sales = await _unitOfWork.HeldSales
+            .FindAsync(s => s.UserId == userId);
+
+        var results = sales.OrderByDescending(s => s.HoldDate).Select(s => new {
+            id = s.Id,
+            date = s.HoldDate.ToString("yyyy-MM-dd HH:mm"),
+            note = s.Note,
+            items = s.ContentJson
+        });
+
+        return Ok(results);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ResumeSale(int id)
+    {
+        var heldSale = await _unitOfWork.HeldSales
+            .GetQueryable()
+            .Include(h => h.SaleItems)
+            .ThenInclude(hi => hi.Product)
+            .FirstOrDefaultAsync(h => h.Id == id);
+
+        if (heldSale == null) return NotFound();
+
+        var items = heldSale.SaleItems.Select(i => new {
+            id = i.ProductId,
+            name = i.Product?.Name ?? "غير معروف",
+            price = i.UnitPrice,
+            qty = i.Quantity
+        });
+
+        return Ok(new { items = items });
     }
 }

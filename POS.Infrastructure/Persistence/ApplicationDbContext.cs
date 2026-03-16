@@ -21,6 +21,7 @@ namespace POS.Infrastructure.Persistence
         public DbSet<CustomerTransaction> CustomerTransactions { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Sale> Sales { get; set; }
+        public DbSet<HeldSale> HeldSales { get; set; }
         public DbSet<BoxTransaction> BoxTransactions { get; set; }
         public DbSet<Shift> Shifts { get; set; }
         public DbSet<SaleItem> SaleItems { get; set; }
@@ -84,6 +85,18 @@ namespace POS.Infrastructure.Persistence
                 .WithMany(u => u.Shifts)
                 .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SaleItem>()
+                .HasOne(si => si.Sale)
+                .WithMany(s => s.SaleItems)
+                .HasForeignKey(si => si.SaleId)
+                .IsRequired(false); 
+
+            modelBuilder.Entity<SaleItem>()
+                .HasOne(si => si.HeldSale)
+                .WithMany(hs => hs.SaleItems)
+                .HasForeignKey(si => si.HeldSaleId)
+                .IsRequired(false); 
         }
     }
 }

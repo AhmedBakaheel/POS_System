@@ -31,6 +31,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddScoped<ISaleService, SaleService>();
+builder.Services.AddScoped<ISalesReturnService, SalesReturnService>();
 builder.Services.AddIdentity<AppUser, AppRole>(options =>
 {
     options.User.AllowedUserNameCharacters = null;

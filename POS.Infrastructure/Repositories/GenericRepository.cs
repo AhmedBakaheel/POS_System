@@ -14,8 +14,17 @@ namespace POS.Infrastructure.Repositories
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         protected readonly ApplicationDbContext _context;
-        public GenericRepository(ApplicationDbContext context) => _context = context;
+        protected readonly DbSet<T> _dbSet;
+        public GenericRepository(ApplicationDbContext context)
+        {
+            _context = context;
+            _dbSet = _context.Set<T>(); 
+        }
 
+        public IQueryable<T> GetQueryable()
+        {
+            return _dbSet.AsQueryable();
+        }
         public async Task<T> GetByIdAsync(int id) => await _context.Set<T>().FindAsync(id);
         public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
         {

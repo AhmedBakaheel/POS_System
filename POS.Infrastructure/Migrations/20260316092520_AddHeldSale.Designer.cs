@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using POS.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using POS.Infrastructure.Persistence;
 namespace POS.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260316092520_AddHeldSale")]
+    partial class AddHeldSale
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -522,9 +525,6 @@ namespace POS.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("HeldSaleId")
-                        .HasColumnType("int");
-
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
@@ -538,8 +538,6 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("HeldSaleId");
 
                     b.HasIndex("ProductId");
 
@@ -893,11 +891,6 @@ namespace POS.Infrastructure.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.SaleItem", b =>
                 {
-                    b.HasOne("POS.Domain.Entities.HeldSale", "HeldSale")
-                        .WithMany("SaleItems")
-                        .HasForeignKey("HeldSaleId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("POS.Domain.Entities.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
@@ -907,9 +900,8 @@ namespace POS.Infrastructure.Migrations
                     b.HasOne("POS.Domain.Entities.Sale", "Sale")
                         .WithMany("SaleItems")
                         .HasForeignKey("SaleId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("HeldSale");
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Product");
 
@@ -983,11 +975,6 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Sales");
 
                     b.Navigation("Transactions");
-                });
-
-            modelBuilder.Entity("POS.Domain.Entities.HeldSale", b =>
-                {
-                    b.Navigation("SaleItems");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Purchase", b =>

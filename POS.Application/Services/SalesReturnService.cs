@@ -21,6 +21,12 @@ namespace POS.Application.Services
 
         public async Task<bool> ProcessReturnAsync(SalesReturnDTO returnDto)
         {
+            if (returnDto == null)
+                throw new ArgumentNullException(nameof(returnDto));
+
+            if (returnDto.Items == null || !returnDto.Items.Any())
+                throw new Exception("لا توجد أصناف في المرتجع");
+
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
@@ -38,11 +44,12 @@ namespace POS.Application.Services
                 foreach (var item in returnDto.Items)
                 {
                     var product = await _unitOfWork.Products.GetByIdAsync(item.ProductId);
-                    if (product != null)
-                    {
-                        product.StockQuantity += item.Quantity; 
-                        _unitOfWork.Products.Update(product);
-                    }
+
+                    if (product == null)
+                        continue;
+
+                    product.StockQuantity += item.Quantity;
+                    _unitOfWork.Products.Update(product);
 
                     salesReturn.ReturnItems.Add(new SalesReturnItem
                     {
@@ -51,6 +58,7 @@ namespace POS.Application.Services
                         UnitPrice = item.UnitPrice
                     });
                 }
+
                 var boxTransaction = new BoxTransaction
                 {
                     TransactionDate = DateTime.Now,
@@ -71,7 +79,7 @@ namespace POS.Application.Services
             catch (Exception)
             {
                 await _unitOfWork.RollbackAsync();
-                return false;
+                throw;
             }
         }
     }

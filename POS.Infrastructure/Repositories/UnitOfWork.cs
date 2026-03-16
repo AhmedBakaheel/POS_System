@@ -25,6 +25,7 @@ namespace POS.Infrastructure.Repositories
         public IGenericRepository<PurchaseItem> PurchaseItems { get; private set; }
         public IGenericRepository<Shift> Shifts { get; private set; }
         public IGenericRepository<SalesReturn> SalesReturns { get; private set; }
+        public IGenericRepository<HeldSale> HeldSales { get; private set; }
         public IGenericRepository<SalesReturnItem> SalesReturnItems { get; private set; }
         public IGenericRepository<SupplierTransaction> SupplierTransactions { get; private set; }
         public ISaleRepository Sales { get; private set; }
@@ -38,16 +39,17 @@ namespace POS.Infrastructure.Repositories
             Categories = new GenericRepository<Category>(_context);
             Customers = new GenericRepository<Customer>(_context);
             CustomerTransactions = new GenericRepository<CustomerTransaction>(_context);
-            Suppliers = new GenericRepository<Supplier>(_context); 
+            Suppliers = new GenericRepository<Supplier>(_context);
             Purchases = new GenericRepository<Purchase>(_context);
             PurchaseItems = new GenericRepository<PurchaseItem>(_context);
             BoxTransactions = new GenericRepository<BoxTransaction>(_context);
             Shifts = new GenericRepository<Shift>(_context);
             Sales = new SaleRepository(_context);
             Licenses = new LicenseRepository(_context);
+            SupplierTransactions = new GenericRepository<SupplierTransaction>(_context);
+            HeldSales = new GenericRepository<HeldSale>(_context);
             SalesReturns = new GenericRepository<SalesReturn>(_context);
             SalesReturnItems = new GenericRepository<SalesReturnItem>(_context);
-            SupplierTransactions = new GenericRepository<SupplierTransaction>(_context);
         }
 
         public async Task<int> CompleteAsync() => await _context.SaveChangesAsync();

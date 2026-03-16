@@ -93,12 +93,21 @@
                     </div>
 
                     <div class="mt-auto">
-                        <button class="btn btn-success btn-lg w-100 py-3 mb-2 fw-bold fs-3 shadow" id="btn-complete-sale">
-                            إتمام وطباعة (F10)
-                        </button>
-                        <button class="btn btn-outline-danger w-100 py-2" onclick="location.reload()">
-                            <i class="fas fa-trash-alt me-2"></i> إلغاء الفاتورة
-                        </button>
+                        <button class="btn btn-success btn-lg w-100 py-3 mb-2 fw-bold shadow" id="btn-complete-sale">إتمام وطباعة (F10)</button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-warning flex-fill" id="btn-hold-sale"><i class="fas fa-pause"></i> تعليق (F8)</button>
+                            <button class="btn btn-info flex-fill text-white" onclick="showHeldSalesModal()"><i class="fas fa-list"></i> معلقة</button>
+                        </div>
+                        <button class="btn btn-outline-danger w-100 py-2 mt-2" onclick="location.reload()"><i class="fas fa-trash-alt"></i> إلغاء</button>
+                    </div>
+
+                    <div class="modal fade" id="heldSalesModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header"><h5>الفواتير المعلقة</h5></div>
+                                <div class="modal-body"><div id="held-sales-list" class="list-group"></div></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -361,9 +370,9 @@
             });
 
             $(document).keydown(function(e) {
-                if (e.which === 121) { e.preventDefault(); $('#btn-complete-sale').click(); } // F10
-                if (e.which === 113) { e.preventDefault(); $('#barcode-input').focus(); } // F2
-                if (e.which === 115) { e.preventDefault(); $('#returnModal').modal('show'); } // F4
+                if (e.which === 121) { e.preventDefault(); $('#btn-complete-sale').click(); }
+                if (e.which === 113) { e.preventDefault(); $('#barcode-input').focus(); } 
+                if (e.which === 115) { e.preventDefault(); $('#returnModal').modal('show'); } 
             });
         });
 
@@ -403,5 +412,64 @@
                 });
             }
         });
+            $('#btn-hold-sale').click(function() {
+            if(cart.length === 0) return Swal.fire('تنبيه', 'السلة فارغة', 'warning');
+            Swal.fire({ title: 'ملاحظة الفاتورة', input: 'text', showCancelButton: true }).then((result) => {
+                if(result.isConfirmed) {
+                    $.ajax({ url: '/Sales/HoldSale', type: 'POST', contentType: 'application/json',
+                        data: JSON.stringify({ note: result.value || 'فاتورة معلقة', items: cart }),
+                        success: () => { cart = []; updateUI(); Swal.fire('تم التعليق', '', 'success'); }
+                    });
+                }
+            });
+        });
+
+        window.showHeldSalesModal = function() {
+            $.get('/Sales/GetHeldSales', function(data) {
+                let html = data.map(s => `<button class="list-group-item d-flex justify-content-between" onclick="resumeSale(${s.id})">
+                    ${s.note} <small class="text-muted">${new Date(s.date).toLocaleTimeString()}</small></button>`).join('');
+                $('#held-sales-list').html(html);
+                $('#heldSalesModal').modal('show');
+            });
+        };
+
+        window.resumeSale = function(id) {
+            $.get('/Sales/ResumeSale?id=' + id, function(data) {
+                cart = data.items; 
+                updateUI();
+                $('#heldSalesModal').modal('hide');
+            });
+        };
+
+        $('#btn-find-sale').click(function() {
+            let saleId = $('#return-sale-id').val();
+            $.get(`/Sales/GetSaleDetails?saleId=${saleId}`, function(data) {
+                let html = '';
+                data.items.forEach(i => {
+                    html += `<tr>
+                        <td>${i.productName}</td>
+                        <td>${i.quantity}</td>
+                        <td><input type="number" class="form-control return-qty" data-id="${i.productId}" data-price="${i.unitPrice}" max="${i.quantity}" value="0"></td>
+                        <td class="line-total">0.00</td>
+                    </tr>`;
+                });
+                $('#return-items-body').html(html);
+                $('#return-details, #btn-submit-return').removeClass('d-none');
+            }).fail(() => Swal.fire('خطأ', 'رقم الفاتورة غير موجود', 'error'));
+        });
+
+          window.resumeSale = function(id) {
+            $.get('/Sales/ResumeSale?id=' + id, function(data) {
+                
+                cart = data.items;
+
+                updateUI();
+
+                $('#heldSalesModal').modal('hide');
+
+            }).fail(function() {
+                Swal.fire('خطأ', 'فشل استرجاع الفاتورة', 'error');
+            });
+        };
     </script>
 }

@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace POS.Application.DTOs
 {
-    public class SaleHistoryDTO
+    public class HeldSaleDTO
     {
-        public int SaleId { get; set; }
-        public DateTime Date { get; set; }
-        public decimal Amount { get; set; } 
+        public string? Note { get; set; }
+        public List<SaleDetailDTO> Items { get; set; } = new List<SaleDetailDTO>();
     }
 }

@@ -10,6 +10,7 @@ namespace POS.Domain.Interfaces
 {
     public interface IGenericRepository<T> where T : class
     {
+        IQueryable<T> GetQueryable();
         Task<T> GetByIdAsync(int id);
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
         Task<IEnumerable<T>> GetAllAsync();
