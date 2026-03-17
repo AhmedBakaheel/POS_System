@@ -471,5 +471,38 @@
                 Swal.fire('خطأ', 'فشل استرجاع الفاتورة', 'error');
             });
         };
+
+                
+        function fetchProductData(barcode) {
+            $.get('/Products/GetByBarcode?barcode=' + barcode, function(product) {
+                if (product) {
+                    let finalPrice = product.price;
+                    let discountInfo = "";
+
+                    
+                    if (product.activePromotion) {
+                        finalPrice = calculateDiscount(product.price, product.activePromotion);
+                        discountInfo = `<span class="badge bg-danger">عرض: ${product.activePromotion.name}</span>`;
+                    }
+
+                    addToCart({
+                        id: product.id,
+                        name: product.name,
+                        originalPrice: product.price, 
+                        price: finalPrice,           
+                        discountName: product.activePromotion ? product.activePromotion.name : ""
+                    });
+                }
+            });
+        }
+
+        function calculateDiscount(price, promotion) {
+            if (promotion.type === 1) { 
+                return price - (price * (promotion.value / 100));
+            } else if (promotion.type === 2) { 
+                return price - promotion.value;
+            }
+            return price;
+        }
     </script>
 }

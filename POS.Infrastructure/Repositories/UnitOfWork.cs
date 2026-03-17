@@ -28,6 +28,8 @@ namespace POS.Infrastructure.Repositories
         public IGenericRepository<HeldSale> HeldSales { get; private set; }
         public IGenericRepository<SalesReturnItem> SalesReturnItems { get; private set; }
         public IGenericRepository<SupplierTransaction> SupplierTransactions { get; private set; }
+        public IGenericRepository<Promotion> Promotions { get; private set; }
+        public IGenericRepository<SalesDiscount> SalesDiscounts { get; private set; }
         public ISaleRepository Sales { get; private set; }
         public ILicenseRepository Licenses { get; private set; }
 
@@ -50,6 +52,8 @@ namespace POS.Infrastructure.Repositories
             HeldSales = new GenericRepository<HeldSale>(_context);
             SalesReturns = new GenericRepository<SalesReturn>(_context);
             SalesReturnItems = new GenericRepository<SalesReturnItem>(_context);
+            Promotions = new GenericRepository<Promotion>(_context);
+            SalesDiscounts = new GenericRepository<SalesDiscount>(_context);
         }
 
         public async Task<int> CompleteAsync() => await _context.SaveChangesAsync();

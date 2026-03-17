@@ -29,6 +29,8 @@ namespace POS.Infrastructure.Persistence
         public DbSet<Purchase> Purchases { get; set; }
         public DbSet<PurchaseItem> PurchaseItems { get; set; }
         public DbSet<SupplierTransaction> SupplierTransactions { get; set; }
+        public DbSet<Promotion> Promotions { get; set; }
+        public DbSet<SalesDiscount> SalesDiscounts { get; set; }
         public DbSet<SalesReturnItem> SalesReturnItems { get; set; }
         public DbSet<SystemLicense> Licenses { get; set; }
 

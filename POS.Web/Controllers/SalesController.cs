@@ -113,6 +113,7 @@ public class SalesController : Controller
         var result = await _salesReturnService.ProcessReturnAsync(returnDto);
         return result ? Ok() : BadRequest("فشل تنفيذ المرتجع");
     }
+
     [HttpPost]
     public async Task<IActionResult> Checkout([FromBody] SaleDTO saleDto)
     {
@@ -126,9 +127,9 @@ public class SalesController : Controller
             var sale = new Sale
             {
                 SaleDate = DateTime.Now,
-                GrandTotal = saleDto.GrandTotal,
-                TotalAmount = saleDto.GrandTotal, 
+                TotalAmount = saleDto.TotalAmount,
                 TaxAmount = 0,
+                GrandTotal = saleDto.TotalAmount - saleDto.TotalDiscount,
                 PaymentType = (PaymentType)saleDto.PaymentType,
                 CustomerId = saleDto.CustomerId,
                 ShiftId = saleDto.ShiftId,
@@ -139,20 +140,38 @@ public class SalesController : Controller
             {
                 var product = await _unitOfWork.Products.GetByIdAsync(item.ProductId);
 
-                if (product == null || product.StockQuantity < item.Quantity)
-                    throw new Exception($"المنتج {product?.Name} رصيده غير كافٍ");
+                if (product == null)
+                    throw new Exception($"المنتج غير موجود");
 
+                if (product.StockQuantity < item.Quantity)
+                    throw new Exception($"المنتج {product.Name} رصيده غير كافٍ. المتبقي: {product.StockQuantity}");
+
+               
                 product.StockQuantity -= item.Quantity;
+                _unitOfWork.Products.Update(product);
 
                 sale.SaleItems.Add(new SaleItem
                 {
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice
+                    UnitPrice = item.UnitPrice,
+                    Sale = sale
                 });
             }
 
+            
             await _unitOfWork.Sales.AddAsync(sale);
+
+            
+            if (saleDto.TotalDiscount > 0)
+            {
+                await _unitOfWork.SalesDiscounts.AddAsync(new SalesDiscount
+                {
+                    Sale = sale, 
+                    PromotionId = saleDto.ActivePromotionId,
+                    DiscountAmount = saleDto.TotalDiscount
+                });
+            }
 
             if (saleDto.PaymentType == 2 && saleDto.CustomerId.HasValue)
             {
@@ -162,7 +181,7 @@ public class SalesController : Controller
                     Date = DateTime.Now,
                     Description = $"فاتورة مبيعات رقم {sale.Id}",
                     Reference = sale.Id.ToString(),
-                    Debit = saleDto.GrandTotal,
+                    Debit = sale.GrandTotal, 
                     Credit = 0,
                     Type = CustomerTransactionType.SaleInvoice
                 });

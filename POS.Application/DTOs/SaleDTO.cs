@@ -16,5 +16,7 @@ namespace POS.Application.DTOs
         public decimal TotalAmount => Items.Sum(i => i.Total);
         public decimal TaxAmount => 0;
         public decimal GrandTotal => TotalAmount + TaxAmount;
+        public decimal TotalDiscount { get; set; } 
+        public int? ActivePromotionId { get; set; }
     }
 }
